@@ -1,3 +1,5 @@
+import os
+
 from django.db import models
 
 from categories.models import SubCategory
@@ -21,6 +23,10 @@ class Product(models.Model):
     image = models.ImageField(upload_to='product_images')
     price = models.DecimalField(decimal_places=2, max_digits=10)
     sold_via_bot = models.BooleanField(blank=True, null=True)
+
+    @property
+    def image_url(self):
+        return f'{os.environ.get("HOSTNAME")}/{self.image}'
 
     def __str__(self):
         return f'Product {self.name}'
