@@ -19,17 +19,12 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         category = self.get_object()
         sub_categories = category.sub_categories.all()
-        subcategory_serializer = CategorySerializer(sub_categories, many=True)
+        subcategory_serializer = CategorySerializer(sub_categories, many=True, context={'request': request})
         data = subcategory_serializer.data
         return Response(data)
 
     @action(detail=True, methods=['get'])
     def list_products(self, request, pk=None):
         category = self.get_object()
-        # products = category.products.all()
-        # serializer = ProductSerializer(products, many=True)
-        serializer = CategorySerializer(category)
+        serializer = CategorySerializer(category, context={'request': request})
         return Response(serializer.data)
-
-
-

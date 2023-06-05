@@ -43,7 +43,7 @@ async def get_inline_keyboard_category(data):
 async def get_category_name(data):
     for item in data:
         counts_parent_category = '📂' * item['count_parents']
-        category_name = f"{counts_parent_category}{item['name']}"
+        category_name = f"{counts_parent_category}{item['parent_name']}"
         return category_name
 
 
