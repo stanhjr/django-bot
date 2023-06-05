@@ -1,31 +1,24 @@
 from rest_framework import viewsets
 from rest_framework.response import Response
 
-from categories.models import Category, SubCategory
-from categories.serializers import CategorySerializer, SubCategorySerializer
-from products.models import Product
-from products.serializers import ProductSerializer
+from categories.models import Category
+from categories.serializers import CategorySerializer, CategoryNameSerializer
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
-    serializer_class = CategorySerializer
+    serializer_class = CategoryNameSerializer
+
+    def get_queryset(self):
+        if self.action == 'list':
+            return Category.objects.filter(parent__isnull=True).all()
+
+        return Category.objects.all()
 
     def retrieve(self, request, *args, **kwargs):
         category = self.get_object()
-        subcategories = SubCategory.objects.filter(category=category)
-        subcategory_serializer = SubCategorySerializer(subcategories, many=True)
+        sub_categories = category.sub_categories.all()
+        subcategory_serializer = CategorySerializer(sub_categories, many=True)
         data = subcategory_serializer.data
         return Response(data)
 
-
-class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = SubCategory.objects.all()
-    serializer_class = SubCategorySerializer
-
-    def retrieve(self, request, *args, **kwargs):
-        sub_category = self.get_object()
-        products = Product.objects.filter(sub_category=sub_category).exclude(status='sold')
-        product_serializer = ProductSerializer(products, many=True)
-        data = product_serializer.data
-        return Response(data)

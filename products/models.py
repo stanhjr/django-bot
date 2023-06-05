@@ -2,7 +2,7 @@ import os
 
 from django.db import models
 
-from categories.models import SubCategory
+from categories.models import Category
 
 
 class Product(models.Model):
@@ -11,8 +11,8 @@ class Product(models.Model):
         ('available', 'Available'),
         ('sold', 'Sold'),
     ]
-    sub_category = models.ForeignKey(
-        SubCategory,
+    category = models.ForeignKey(
+        Category,
         related_name='products',
         on_delete=models.CASCADE
     )
