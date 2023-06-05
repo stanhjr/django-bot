@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from categories.models import Category
 from products.serializers import ProductSerializer
 
@@ -8,7 +9,7 @@ class CategoryNameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'products_count']
+        fields = ['id', 'name', 'products_count', 'count_parents']
 
     def get_products_count(self, obj):
         return obj.get_all_products_count()
@@ -21,7 +22,8 @@ class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ['id', 'name', 'products', 'sub_categories', 'products_count']
+        fields = ['id', 'name', 'products', 'sub_categories',
+                  'products_count', 'count_parents', 'parent_category_for_bot', 'parent']
 
     def get_products(self, obj):
         products = obj.products.all()

@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 
 from categories.models import Category
@@ -21,4 +22,14 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
         subcategory_serializer = CategorySerializer(sub_categories, many=True)
         data = subcategory_serializer.data
         return Response(data)
+
+    @action(detail=True, methods=['get'])
+    def list_products(self, request, pk=None):
+        category = self.get_object()
+        # products = category.products.all()
+        # serializer = ProductSerializer(products, many=True)
+        serializer = CategorySerializer(category)
+        return Response(serializer.data)
+
+
 

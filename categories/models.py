@@ -12,6 +12,23 @@ class Category(models.Model):
 
         return product_count
 
+    @property
+    def parent_category_for_bot(self):
+        if self.parent:
+            if self.parent.parent:
+                return self.parent.parent.id
+
+    @property
+    def count_parents(self):
+        count = 0
+        current_category = self
+
+        while current_category.parent:
+            count += 1
+            current_category = current_category.parent
+
+        return count
+
     def __str__(self):
         if self.parent:
             return f'{self.parent} -> {self.name}'

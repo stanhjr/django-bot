@@ -29,7 +29,7 @@ async def get_categories() -> list:
                 return data
 
 
-async def get_sub_categories(category_id: int) -> list:
+async def get_sub_categories(category_id: int) -> dict:
     async with aiohttp.ClientSession() as session:
         url = f"{DIGITAL_PROFILE_HOSTNAME}/api/categories/{category_id}/"
         async with session.get(url=url, headers=HEADERS) as resp:
@@ -38,9 +38,9 @@ async def get_sub_categories(category_id: int) -> list:
                 return data
 
 
-async def get_products(sub_category_id: int) -> dict:
+async def get_products(category_id: int) -> dict:
     async with aiohttp.ClientSession() as session:
-        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/sub_categories/{sub_category_id}/"
+        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/categories/{category_id}/list_products/"
         async with session.get(url=url, headers=HEADERS) as resp:
             if resp.status == 200:
                 data = await resp.json()
