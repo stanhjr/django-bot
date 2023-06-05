@@ -20,6 +20,8 @@ async def get_inline_keyboard_category(data):
     category_id = None
     is_base = None
     for item in data:
+        if not item.get('products_count'):
+            continue
         is_base = isinstance(item.get('sub_categories'), list)
         category_id = item.get('parent_category_for_bot')
         callback_data = f"cat{item['id']}"
@@ -29,10 +31,10 @@ async def get_inline_keyboard_category(data):
         keyboard.insert(button)
 
     if category_id:
-        button = InlineKeyboardButton("⤴ Наверх", callback_data=f'cat{category_id}')
+        button = InlineKeyboardButton("⤴ Назад", callback_data=f'cat{category_id}')
         keyboard.insert(button)
     elif is_base is True:
-        button = InlineKeyboardButton("⤴ Наверх", callback_data=f'categories_list')
+        button = InlineKeyboardButton("⤴ Назад", callback_data=f'categories_list')
         keyboard.insert(button)
 
     return keyboard
@@ -63,13 +65,36 @@ class ProductCreator:
 
     async def get_inline_keyboard(self, category_data: dict) -> types.InlineKeyboardMarkup:
         tg_nickname = self.product.get('tg_nickname')
+        callback_data = f"cat{category_data['parent']}"
         inline_keyboard = types.InlineKeyboardMarkup()
         button = types.InlineKeyboardButton('Чат з продавцем', url=f'https://t.me/{tg_nickname}')
         if tg_nickname:
             inline_keyboard.add(button)
-        callback_data = f"cat{category_data['parent']}"
-        up_button = InlineKeyboardButton("⤴ Наверх", callback_data=callback_data)
+
+        total_pages = category_data['total_pages']
+        next_page = category_data['next_page']
+        previous_page = category_data['previous_page']
+        if total_pages == 1:
+            up_button = InlineKeyboardButton("⤴ Назад", callback_data=callback_data)
+            inline_keyboard.add(up_button)
+            return inline_keyboard
+
+        pagination_buttons = []
+        if previous_page:
+            previous_button = InlineKeyboardButton("⬅️", callback_data=f"pag{category_data['id']}_{previous_page}")
+            pagination_buttons.append(previous_button)
+
+        pagination_text = InlineKeyboardButton(f"Стр {category_data['current_page']}/{total_pages}", callback_data='3')
+        pagination_buttons.append(pagination_text)
+
+        if next_page:
+            next_button = InlineKeyboardButton("➡️", callback_data=f"pag{category_data['id']}_{next_page}")
+            pagination_buttons.append(next_button)
+
+        inline_keyboard.add(*pagination_buttons)
+        up_button = InlineKeyboardButton("⤴ Назад", callback_data=callback_data)
         inline_keyboard.add(up_button)
+
         return inline_keyboard
 
     async def get_image_path(self) -> str:

@@ -24,10 +24,26 @@ storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
 
 
+async def send_product_photo(product, callback_query, data):
+    product_creator = ProductCreator(product)
+    caption = await product_creator.get_caption()
+    inline_keyboard = await product_creator.get_inline_keyboard(category_data=data)
+    try:
+        file_path = await product_creator.get_image_path()
+        with open(file_path, 'rb') as file:
+            await bot.send_photo(callback_query.from_user.id,
+                                 caption=caption,
+                                 photo=file,
+                                 reply_markup=inline_keyboard,
+                                 parse_mode="Markdown")
+    except Exception as e:
+        print(e)
+
+
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), commands=['start'])
 async def start(message: types.Message):
     main_keyboard = await get_main_menu()
-    await message.answer("Доброго дня", reply_markup=main_keyboard)
+    await message.answer("Доброго дня, ласкаво просимо до нашого магазину", reply_markup=main_keyboard)
 
 
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), text='🏡 Головне меню')
@@ -35,7 +51,7 @@ async def start(message: types.Message):
     json_data = await get_categories()
 
     inline_keyboard = await get_inline_keyboard_category(json_data)
-    await message.answer("Головне меню:", reply_markup=inline_keyboard)
+    await message.answer("🏡 Головне меню", reply_markup=inline_keyboard)
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('categories_list'))
@@ -44,7 +60,7 @@ async def categories_list(callback_query: types.CallbackQuery):
 
     inline_keyboard = await get_inline_keyboard_category(json_data)
     await bot.send_message(callback_query.from_user.id,
-                           text=f'Категории',
+                           text='🏡 Головне меню',
                            reply_markup=inline_keyboard)
 
 
@@ -61,23 +77,21 @@ async def sub_categories(callback_query: types.CallbackQuery):
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('pro'))
-async def sub_categories(callback_query: types.CallbackQuery):
+async def get_products_category(callback_query: types.CallbackQuery):
     category_id = callback_query.data[3:]
     data = await get_products(category_id)
+
     for product in data['products']:
-        product_creator = ProductCreator(product)
-        caption = await product_creator.get_caption()
-        inline_keyboard = await product_creator.get_inline_keyboard(category_data=data)
-        try:
-            file_path = await product_creator.get_image_path()
-            with open(file_path, 'rb') as file:
-                await bot.send_photo(callback_query.from_user.id,
-                                     caption=caption,
-                                     photo=file,
-                                     reply_markup=inline_keyboard,
-                                     parse_mode="Markdown")
-        except Exception as e:
-            print(e)
+        await send_product_photo(product=product, data=data, callback_query=callback_query)
+
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('pag'))
+async def get_products_pagination(callback_query: types.CallbackQuery):
+    callback_data = callback_query.data[3:]
+    category_id, page_num = callback_data.split('_')
+    data = await get_products(category_id, page=page_num)
+    for product in data['products']:
+        await send_product_photo(product=product, data=data, callback_query=callback_query)
 
 
 if __name__ == "__main__":
