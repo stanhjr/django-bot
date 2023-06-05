@@ -23,6 +23,8 @@ class Product(models.Model):
     image = models.ImageField(upload_to='product_images')
     price = models.DecimalField(decimal_places=2, max_digits=10)
     sold_via_bot = models.BooleanField(blank=True, null=True)
+    tg_nickname = models.CharField(max_length=50, blank=True, null=True)
+    phone = models.CharField(max_length=100, blank=True, null=True)
 
     @property
     def image_url(self):

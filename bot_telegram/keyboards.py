@@ -1,17 +1,12 @@
+import os
+
+from aiogram import types
 from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     KeyboardButton,
     ReplyKeyboardMarkup
 )
-
-
-async def is_cancel_category(data) -> bool:
-    return False
-    if isinstance(data.get('sub_categories'), list) and len(data.get('sub_categories')) == 0:
-        if isinstance(data.get('products'), list) and len(data.get('products')) > 1:
-            return True
-    return False
 
 
 async def get_main_menu():
@@ -50,17 +45,33 @@ async def get_category_name(data):
         return category_name
 
 
-async def up_inline(data):
-    keyboard = InlineKeyboardMarkup(row_width=1)
-    callback_data = f"cat{data['parent']}"
-    button = InlineKeyboardButton("⤴ Наверх", callback_data=callback_data)
-    keyboard.insert(button)
-    return keyboard
+class ProductCreator:
 
+    def __init__(self, product: dict):
+        self.product = product
 
-async def get_up_text(data) -> str:
-    category_name = data['name']
-    sub_category_name = data['name']
-    text = f"📂 {category_name}\n" \
-           f"📂📂: {sub_category_name}"
-    return category_name
+    async def get_caption(self) -> str:
+        product_name = f"*{self.product['name'].capitalize()}*"
+        code = f"# Код: {self.product['code']}"
+        price = f"💰 {self.product['price']}"
+        caption = f"{product_name}\n" \
+                  f"{code}\n"
+        if self.product.get('phone'):
+            caption += f"📲 {self.product.get('phone')}\n"
+        caption += f"---\n {price}\n ---"
+        return caption
+
+    async def get_inline_keyboard(self, category_data: dict) -> types.InlineKeyboardMarkup:
+        tg_nickname = self.product.get('tg_nickname')
+        inline_keyboard = types.InlineKeyboardMarkup()
+        button = types.InlineKeyboardButton('Чат з продавцем', url=f'https://t.me/{tg_nickname}')
+        if tg_nickname:
+            inline_keyboard.add(button)
+        callback_data = f"cat{category_data['parent']}"
+        up_button = InlineKeyboardButton("⤴ Наверх", callback_data=callback_data)
+        inline_keyboard.add(up_button)
+        return inline_keyboard
+
+    async def get_image_path(self) -> str:
+        app_directory = os.getcwd()
+        return app_directory + self.product['image']

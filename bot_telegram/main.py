@@ -13,10 +13,8 @@ from api import get_categories, get_sub_categories, get_products
 from keyboards import (
     get_inline_keyboard_category,
     get_category_name,
-    get_up_text,
-    up_inline,
-    get_main_menu, is_cancel_category
-
+    get_main_menu,
+    ProductCreator
 )
 
 load_dotenv(find_dotenv())
@@ -54,32 +52,12 @@ async def categories_list(callback_query: types.CallbackQuery):
 async def sub_categories(callback_query: types.CallbackQuery):
     category_id = callback_query.data[3:]
     data = await get_sub_categories(category_id)
-    is_cancel_cat = await is_cancel_category(data)
+    inline_keyboard = await get_inline_keyboard_category(data)
+    category_name = await get_category_name(data)
 
-    if is_cancel_cat is True:
-        for product in data['products']:
-            app_directory = os.getcwd()
-            file_path = app_directory + product['image']
-            try:
-                caption = f"Product Name: {product['name']}\n" \
-                          f"Description: {product['description']}\n" \
-                          f"Price: {product['price']}"
-                with open(file_path, 'rb') as file:
-                    await bot.send_photo(callback_query.from_user.id, caption=caption, photo=file)
-            except Exception as e:
-                print(e)
-        text = await get_up_text(json_data)
-        inline = await up_inline(json_data)
-        await bot.send_message(callback_query.from_user.id,
-                               text=text,
-                               reply_markup=inline)
-    else:
-        inline_keyboard = await get_inline_keyboard_category(data)
-        category_name = await get_category_name(data)
-
-        await bot.send_message(callback_query.from_user.id,
-                               text=category_name,
-                               reply_markup=inline_keyboard)
+    await bot.send_message(callback_query.from_user.id,
+                           text=category_name,
+                           reply_markup=inline_keyboard)
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('pro'))
@@ -87,46 +65,19 @@ async def sub_categories(callback_query: types.CallbackQuery):
     category_id = callback_query.data[3:]
     data = await get_products(category_id)
     for product in data['products']:
-        app_directory = os.getcwd()
-        file_path = app_directory + product['image']
+        product_creator = ProductCreator(product)
+        caption = await product_creator.get_caption()
+        inline_keyboard = await product_creator.get_inline_keyboard(category_data=data)
         try:
-            caption = f"Product Name: {product['name']}\n" \
-                      f"Description: {product['description']}\n" \
-                      f"Price: {product['price']}"
+            file_path = await product_creator.get_image_path()
             with open(file_path, 'rb') as file:
-                await bot.send_photo(callback_query.from_user.id, caption=caption, photo=file)
+                await bot.send_photo(callback_query.from_user.id,
+                                     caption=caption,
+                                     photo=file,
+                                     reply_markup=inline_keyboard,
+                                     parse_mode="Markdown")
         except Exception as e:
             print(e)
-    text = await get_up_text(data)
-    inline = await up_inline(data)
-    await bot.send_message(callback_query.from_user.id,
-                           text=text,
-                           reply_markup=inline)
-
-
-
-
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith('sub'))
-async def send_products_details(callback_query: types.CallbackQuery):
-    sub_category_id = callback_query.data[3:]
-    json_data = await get_products(sub_category_id)
-
-    for product in json_data['products']:
-        app_directory = os.getcwd()
-        file_path = app_directory + product['image']
-        try:
-            caption = f"Product Name: {product['name']}\n" \
-                      f"Description: {product['description']}\n" \
-                      f"Price: {product['price']}"
-            with open(file_path, 'rb') as file:
-                await bot.send_photo(callback_query.from_user.id, caption=caption, photo=file)
-        except Exception as e:
-            print(e)
-    text = await get_up_text(json_data)
-    inline = await up_inline(json_data)
-    await bot.send_message(callback_query.from_user.id,
-                           text=text,
-                           reply_markup=inline)
 
 
 if __name__ == "__main__":
