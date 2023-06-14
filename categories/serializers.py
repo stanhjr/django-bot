@@ -4,7 +4,7 @@ from rest_framework import serializers
 from categories.models import Category
 from products.serializers import ProductSerializer
 
-PAGE_SIZE = 2
+PAGE_SIZE = 5
 
 
 class CategoryNameSerializer(serializers.ModelSerializer):

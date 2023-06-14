@@ -56,8 +56,11 @@ class ProductCreator:
         product_name = f"*{self.product['name'].capitalize()}*"
         code = f"# Код: {self.product['code']}"
         price = f"💰 {self.product['price']}"
+        description = f"{self.product.get('description')}"
         caption = f"{product_name}\n" \
-                  f"{code}\n"
+                  f"{code}\n" \
+                  f"{description}\n"
+
         if self.product.get('phone'):
             caption += f"📲 {self.product.get('phone')}\n"
         caption += f"---\n {price}\n ---"
