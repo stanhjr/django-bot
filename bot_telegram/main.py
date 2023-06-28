@@ -135,9 +135,15 @@ async def sub_categories(callback_query: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data == 'list_categories_sale_out')
 async def categories_list(callback_query: types.CallbackQuery):
     sale_out_categories_list = await get_categories_sale_out(telegram_id=callback_query.from_user.id)
-    if not sale_out_categories_list:
+    try:
+        sum_products_count = sum(item['products_count'] for item in sale_out_categories_list)
+    except Exception:
+        sum_products_count = 0
+
+    if not sum_products_count:
         await bot.send_message(callback_query.from_user.id,
                                text=MESSAGES['not_sale_out'])
+
     else:
         inline_keyboard = await get_inline_keyboard_sale_out_category(sale_out_categories_list)
         await bot.send_message(callback_query.from_user.id,
