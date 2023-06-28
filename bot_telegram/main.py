@@ -9,8 +9,17 @@ from aiogram.dispatcher.filters import ChatTypeFilter
 
 from dotenv import load_dotenv, find_dotenv
 
-from api import get_categories, get_sub_categories, get_products, get_stocks, get_shops, set_feedback, \
-    get_categories_sale_out, get_sub_sale_out_categories, get_sale_out_products
+from api import (
+    get_categories,
+    get_sub_categories,
+    get_products,
+    get_stocks,
+    get_shops,
+    set_feedback,
+    get_categories_sale_out,
+    get_sub_sale_out_categories,
+    get_sale_out_products
+)
 from states import Feedback
 from keyboards import (
     get_inline_keyboard_category,
@@ -46,6 +55,22 @@ async def send_stock_photo(stock, callback_query):
 
 
 async def send_product_photo(product, callback_query, data, is_sale_out=None):
+    product_creator = ProductCreator(product, is_sale_out)
+    caption = await product_creator.get_caption()
+    inline_keyboard = await product_creator.get_inline_keyboard(category_data=data)
+    try:
+        file_path = await product_creator.get_image_path()
+        with open(file_path, 'rb') as file:
+            await bot.send_photo(callback_query.from_user.id,
+                                 caption=caption,
+                                 photo=file,
+                                 reply_markup=inline_keyboard,
+                                 parse_mode="Markdown")
+    except Exception as e:
+        print(e)
+
+
+async def send_sale_out_product_photo(product, callback_query, data, is_sale_out=None):
     product_creator = ProductCreator(product, is_sale_out=True)
     caption = await product_creator.get_caption()
     inline_keyboard = await product_creator.get_inline_keyboard(category_data=data)
@@ -79,7 +104,6 @@ async def start(message: types.Message):
 
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), text='🏡 Головне меню')
 async def start(message: types.Message):
-    # json_data = await get_categories(telegram_id=message.from_user.id)
     inline_keyboard = await get_main_inline_menu()
 
     # inline_keyboard = await get_inline_keyboard_category(json_data)
@@ -195,7 +219,7 @@ async def get_products_category(callback_query: types.CallbackQuery):
     data = await get_sale_out_products(category_id, telegram_id=callback_query.from_user.id)
 
     for product in data['products']:
-        await send_product_photo(product=product, data=data, callback_query=callback_query)
+        await send_product_photo(product=product, data=data, callback_query=callback_query, is_sale_out=True)
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('pag'))
@@ -208,12 +232,12 @@ async def get_products_pagination(callback_query: types.CallbackQuery):
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('psg'))
-async def get_products_pagination(callback_query: types.CallbackQuery):
+async def get_sale_products_pagination(callback_query: types.CallbackQuery):
     callback_data = callback_query.data[3:]
     category_id, page_num = callback_data.split('_')
     data = await get_sale_out_products(category_id, page=page_num, telegram_id=callback_query.from_user.id)
     for product in data['products']:
-        await send_product_photo(product=product, data=data, callback_query=callback_query)
+        await send_product_photo(product=product, data=data, callback_query=callback_query, is_sale_out=True)
 
 
 if __name__ == "__main__":
