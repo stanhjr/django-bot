@@ -137,6 +137,8 @@ class ProductCreator:
         total_pages = category_data['total_pages']
         next_page = category_data['next_page']
         previous_page = category_data['previous_page']
+        feedback_button = InlineKeyboardButton("Не знайшли потрібний товар - залиште заявку", callback_data='feedback')
+        inline_keyboard.add(feedback_button)
         if total_pages == 1:
             up_button = InlineKeyboardButton("⤴ Назад", callback_data=callback_data)
             inline_keyboard.add(up_button)
