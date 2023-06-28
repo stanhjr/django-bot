@@ -1,5 +1,6 @@
 import base64
 import datetime
+import json
 import os
 import functools
 
@@ -81,3 +82,17 @@ async def get_shops(telegram_id) -> dict:
             if resp.status == 200:
                 data = await resp.json()
                 return data
+
+
+@add_telegram_id_header
+async def set_feedback(telegram_id: int, text: str) -> bool:
+    async with aiohttp.ClientSession() as session:
+        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/feedback/"
+        data = {"text": text}
+        headers = dict(HEADERS)  # Создаем копию заголовков
+        headers["Content-Type"] = "application/json"  # Устанавливаем Content-Type как application/json
+
+        async with session.post(url=url, headers=headers, data=json.dumps(data)) as resp:
+            if resp.status == 201:
+                return True
+            return False

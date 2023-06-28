@@ -15,6 +15,12 @@ async def get_start_menu():
     return main_menu
 
 
+async def get_cancel_menu():
+    home_btn = KeyboardButton("❌Отмена")
+    main_menu = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(home_btn)
+    return main_menu
+
+
 async def get_main_inline_menu():
     keyboard = InlineKeyboardMarkup(row_width=1)
 

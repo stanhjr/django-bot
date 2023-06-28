@@ -2,21 +2,24 @@ import os
 
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram import Bot, types
-from aiogram.dispatcher import Dispatcher
+from aiogram.dispatcher import Dispatcher, FSMContext
 from aiogram.utils import executor
 from aiogram.types import ChatType
 from aiogram.dispatcher.filters import ChatTypeFilter
 
 from dotenv import load_dotenv, find_dotenv
 
-from api import get_categories, get_sub_categories, get_products, get_stocks, get_shops
+from api import get_categories, get_sub_categories, get_products, get_stocks, get_shops, set_feedback
+from states import Feedback
 from keyboards import (
     get_inline_keyboard_category,
     get_category_name,
     get_start_menu,
     ProductCreator,
     StockCreator,
-    get_main_inline_menu, get_shops_inline
+    get_main_inline_menu,
+    get_shops_inline,
+    get_cancel_menu
 )
 from messages import MESSAGES
 
@@ -55,6 +58,16 @@ async def send_product_photo(product, callback_query, data):
                                  parse_mode="Markdown")
     except Exception as e:
         print(e)
+
+
+@dp.message_handler(text="❌Отмена", state='*')
+async def cancel(message: types.Message, state: FSMContext):
+    await state.reset_data()
+    await state.finish()
+    inline_keyboard = await get_main_inline_menu()
+    main_keyboard = await get_start_menu()
+    await message.answer("Дякую", reply_markup=main_keyboard)
+    await message.answer("🏡 Головне меню", reply_markup=inline_keyboard)
 
 
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), commands=['start'])
@@ -118,6 +131,27 @@ async def get_shops_list(callback_query: types.CallbackQuery):
                                    text=city['name'],
                                    reply_markup=inline_keyboard)
 
+
+@dp.callback_query_handler(lambda c: c.data == 'feedback')
+async def set_feedback_state(callback_query: types.CallbackQuery, state: FSMContext):
+    cancel_keyboard = await get_cancel_menu()
+    await bot.send_message(callback_query.from_user.id,
+                           text=MESSAGES['feedback'],
+                           reply_markup=cancel_keyboard)
+
+    await state.set_state(Feedback.answer)
+
+
+@dp.message_handler(state=Feedback.answer)
+async def set_feedback_state(message: types.Message, state: FSMContext):
+    await set_feedback(
+        telegram_id=message.from_user.id,
+        text=message.text
+    )
+
+    inline_keyboard = await get_main_inline_menu()
+    await message.answer(MESSAGES['feedback_finish'], reply_markup=inline_keyboard)
+    await state.finish()
 
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('pro'))
