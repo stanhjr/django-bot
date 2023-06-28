@@ -12,6 +12,12 @@ class Category(models.Model):
 
         return product_count
 
+    def get_all_sale_out_products_count(self):
+        product_count = self.products.filter(sale_out=True).count()
+        for sub_category in self.sub_categories.all():
+            product_count += sub_category.get_all_sale_out_products_count()
+        return product_count
+
     @property
     def parent_category_for_bot(self):
         if self.parent:

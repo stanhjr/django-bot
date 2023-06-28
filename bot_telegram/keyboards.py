@@ -25,9 +25,9 @@ async def get_main_inline_menu():
     keyboard = InlineKeyboardMarkup(row_width=1)
 
     buttons = [
-        InlineKeyboardButton("Товари", callback_data='categories'),
+        InlineKeyboardButton("Товари", callback_data='list_categories'),
         InlineKeyboardButton("Акції", callback_data='stocks'),
-        InlineKeyboardButton("Розпродаж", callback_data='sale_out'),
+        InlineKeyboardButton("Розпродаж", callback_data='list_categories_sale_out'),
         InlineKeyboardButton("Наші магазини", callback_data='shops'),
         InlineKeyboardButton("Відгуки та пропозиції", url='https://t.me/feedback_seif_bot'),
         InlineKeyboardButton("Заявка на підбір товару", callback_data='feedback')
@@ -42,6 +42,31 @@ async def get_shops_inline(shop_list: list):
     keyboard = InlineKeyboardMarkup(row_width=1)
     for shop in shop_list:
         keyboard.add(InlineKeyboardButton(f"📍 {shop['address_name']}", url=shop['google_map_link']))
+    return keyboard
+
+
+async def get_inline_keyboard_sale_out_category(data):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    category_id = None
+    is_base = None
+    for item in data:
+        if not item.get('products_count'):
+            continue
+        is_base = isinstance(item.get('sub_categories'), list)
+        category_id = item.get('parent_category_for_bot')
+        callback_data = f"sale_out{item['id']}"
+        if isinstance(item.get('products'), list) and len(item['products']) > 0:
+            callback_data = f"sale_pro{item['id']}"
+        button = InlineKeyboardButton(f"{item['name']} ({item['products_count']})", callback_data=callback_data)
+        keyboard.insert(button)
+
+    if category_id:
+        button = InlineKeyboardButton("⤴ Назад", callback_data=f'sale_out{category_id}')
+        keyboard.insert(button)
+    elif is_base is True:
+        button = InlineKeyboardButton("⤴ Назад", callback_data=f'list_categories_sale_out')
+        keyboard.insert(button)
+
     return keyboard
 
 
@@ -64,7 +89,7 @@ async def get_inline_keyboard_category(data):
         button = InlineKeyboardButton("⤴ Назад", callback_data=f'cat{category_id}')
         keyboard.insert(button)
     elif is_base is True:
-        button = InlineKeyboardButton("⤴ Назад", callback_data=f'categories_list')
+        button = InlineKeyboardButton("⤴ Назад", callback_data=f'list_categories')
         keyboard.insert(button)
 
     return keyboard
@@ -79,8 +104,13 @@ async def get_category_name(data):
 
 class ProductCreator:
 
-    def __init__(self, product: dict):
+    def __init__(self, product: dict, is_sale_out=None):
         self.product = product
+        self.category_callback_name = 'cat'
+        self.pagination_callback_name = 'pag'
+        if is_sale_out:
+            self.category_callback_name = 'sale_out'
+            self.pagination_callback_name = 'pso'
 
     async def get_caption(self) -> str:
         product_name = f"*{self.product['name'].capitalize()}*"
@@ -98,7 +128,7 @@ class ProductCreator:
 
     async def get_inline_keyboard(self, category_data: dict) -> types.InlineKeyboardMarkup:
         tg_nickname = self.product.get('tg_nickname')
-        callback_data = f"cat{category_data['parent']}"
+        callback_data = f"{self.category_callback_name}{category_data['parent']}"
         inline_keyboard = types.InlineKeyboardMarkup()
         button = types.InlineKeyboardButton('Чат з продавцем', url=f'https://t.me/{tg_nickname}')
         if tg_nickname:
@@ -114,7 +144,7 @@ class ProductCreator:
 
         pagination_buttons = []
         if previous_page:
-            previous_button = InlineKeyboardButton("⬅️", callback_data=f"pag{category_data['id']}_{previous_page}")
+            previous_button = InlineKeyboardButton("⬅️", callback_data=f"{self.pagination_callback_name}{category_data['id']}_{previous_page}")
             pagination_buttons.append(previous_button)
 
         pagination_text = InlineKeyboardButton(f"Стр {category_data['current_page']}/{total_pages}", callback_data='3')

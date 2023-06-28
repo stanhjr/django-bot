@@ -9,7 +9,8 @@ from aiogram.dispatcher.filters import ChatTypeFilter
 
 from dotenv import load_dotenv, find_dotenv
 
-from api import get_categories, get_sub_categories, get_products, get_stocks, get_shops, set_feedback
+from api import get_categories, get_sub_categories, get_products, get_stocks, get_shops, set_feedback, \
+    get_categories_sale_out, get_sub_sale_out_categories, get_sale_out_products
 from states import Feedback
 from keyboards import (
     get_inline_keyboard_category,
@@ -19,7 +20,7 @@ from keyboards import (
     StockCreator,
     get_main_inline_menu,
     get_shops_inline,
-    get_cancel_menu
+    get_cancel_menu, get_inline_keyboard_sale_out_category
 )
 from messages import MESSAGES
 
@@ -44,8 +45,8 @@ async def send_stock_photo(stock, callback_query):
         print(e)
 
 
-async def send_product_photo(product, callback_query, data):
-    product_creator = ProductCreator(product)
+async def send_product_photo(product, callback_query, data, is_sale_out=None):
+    product_creator = ProductCreator(product, is_sale_out=True)
     caption = await product_creator.get_caption()
     inline_keyboard = await product_creator.get_inline_keyboard(category_data=data)
     try:
@@ -85,13 +86,13 @@ async def start(message: types.Message):
     await message.answer("🏡 Головне меню", reply_markup=inline_keyboard)
 
 
-@dp.callback_query_handler(lambda c: c.data and c.data.startswith('categories_list'))
+@dp.callback_query_handler(lambda c: c.data == 'list_categories')
 async def categories_list(callback_query: types.CallbackQuery):
     json_data = await get_categories(telegram_id=callback_query.from_user.id)
 
     inline_keyboard = await get_inline_keyboard_category(json_data)
     await bot.send_message(callback_query.from_user.id,
-                           text='🏡 Головне меню',
+                           text='💼 Товари',
                            reply_markup=inline_keyboard)
 
 
@@ -100,6 +101,31 @@ async def sub_categories(callback_query: types.CallbackQuery):
     category_id = callback_query.data[3:]
     data = await get_sub_categories(category_id, telegram_id=callback_query.from_user.id)
     inline_keyboard = await get_inline_keyboard_category(data)
+    category_name = await get_category_name(data)
+
+    await bot.send_message(callback_query.from_user.id,
+                           text=category_name,
+                           reply_markup=inline_keyboard)
+
+
+@dp.callback_query_handler(lambda c: c.data == 'list_categories_sale_out')
+async def categories_list(callback_query: types.CallbackQuery):
+    sale_out_categories_list = await get_categories_sale_out(telegram_id=callback_query.from_user.id)
+    if not sale_out_categories_list:
+        await bot.send_message(callback_query.from_user.id,
+                               text=MESSAGES['not_sale_out'])
+    else:
+        inline_keyboard = await get_inline_keyboard_sale_out_category(sale_out_categories_list)
+        await bot.send_message(callback_query.from_user.id,
+                               text='⚡️⚡️⚡️ Розпродаж',
+                               reply_markup=inline_keyboard)
+
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('sale_out'))
+async def sub_categories(callback_query: types.CallbackQuery):
+    category_id = callback_query.data[8:]
+    data = await get_sub_sale_out_categories(category_id, telegram_id=callback_query.from_user.id)
+    inline_keyboard = await get_inline_keyboard_sale_out_category(data)
     category_name = await get_category_name(data)
 
     await bot.send_message(callback_query.from_user.id,
@@ -163,11 +189,29 @@ async def get_products_category(callback_query: types.CallbackQuery):
         await send_product_photo(product=product, data=data, callback_query=callback_query)
 
 
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('sale_pro'))
+async def get_products_category(callback_query: types.CallbackQuery):
+    category_id = callback_query.data[8:]
+    data = await get_sale_out_products(category_id, telegram_id=callback_query.from_user.id)
+
+    for product in data['products']:
+        await send_product_photo(product=product, data=data, callback_query=callback_query)
+
+
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('pag'))
 async def get_products_pagination(callback_query: types.CallbackQuery):
     callback_data = callback_query.data[3:]
     category_id, page_num = callback_data.split('_')
     data = await get_products(category_id, page=page_num, telegram_id=callback_query.from_user.id)
+    for product in data['products']:
+        await send_product_photo(product=product, data=data, callback_query=callback_query)
+
+
+@dp.callback_query_handler(lambda c: c.data and c.data.startswith('psg'))
+async def get_products_pagination(callback_query: types.CallbackQuery):
+    callback_data = callback_query.data[3:]
+    category_id, page_num = callback_data.split('_')
+    data = await get_sale_out_products(category_id, page=page_num, telegram_id=callback_query.from_user.id)
     for product in data['products']:
         await send_product_photo(product=product, data=data, callback_query=callback_query)
 

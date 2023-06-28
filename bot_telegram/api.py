@@ -43,6 +43,16 @@ async def get_categories(telegram_id) -> list:
 
 
 @add_telegram_id_header
+async def get_categories_sale_out(telegram_id) -> list:
+    async with aiohttp.ClientSession() as session:
+        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/categories_sale_out/"
+        async with session.get(url=url, headers=HEADERS) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                return data
+
+
+@add_telegram_id_header
 async def get_sub_categories(category_id: int, telegram_id) -> dict:
     async with aiohttp.ClientSession() as session:
         url = f"{DIGITAL_PROFILE_HOSTNAME}/api/categories/{category_id}/"
@@ -53,9 +63,31 @@ async def get_sub_categories(category_id: int, telegram_id) -> dict:
 
 
 @add_telegram_id_header
+async def get_sub_sale_out_categories(category_id: int, telegram_id) -> dict:
+    async with aiohttp.ClientSession() as session:
+        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/categories_sale_out/{category_id}/"
+        async with session.get(url=url, headers=HEADERS) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                return data
+
+
+@add_telegram_id_header
 async def get_products(category_id: int, telegram_id, page: int = None) -> dict:
     async with aiohttp.ClientSession() as session:
         url = f"{DIGITAL_PROFILE_HOSTNAME}/api/categories/{category_id}/list_products/"
+        if page:
+            url += f"?page={page}"
+        async with session.get(url=url, headers=HEADERS) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                return data
+
+
+@add_telegram_id_header
+async def get_sale_out_products(category_id: int, telegram_id, page: int = None) -> dict:
+    async with aiohttp.ClientSession() as session:
+        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/categories_sale_out/{category_id}/list_products/"
         if page:
             url += f"?page={page}"
         async with session.get(url=url, headers=HEADERS) as resp:
