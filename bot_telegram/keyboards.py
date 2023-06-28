@@ -9,10 +9,34 @@ from aiogram.types import (
 )
 
 
-async def get_main_menu():
+async def get_start_menu():
     home_btn = KeyboardButton("🏡 Головне меню")
     main_menu = ReplyKeyboardMarkup(resize_keyboard=True, row_width=2).add(home_btn)
     return main_menu
+
+
+async def get_main_inline_menu():
+    keyboard = InlineKeyboardMarkup(row_width=1)
+
+    buttons = [
+        InlineKeyboardButton("Товари", callback_data='categories'),
+        InlineKeyboardButton("Акції", callback_data='stocks'),
+        InlineKeyboardButton("Розпродаж", callback_data='sale_out'),
+        InlineKeyboardButton("Наші магазини", callback_data='shops'),
+        InlineKeyboardButton("Відгуки та пропозиції", url='https://t.me/feedback_seif_bot'),
+        InlineKeyboardButton("Заявка на підбір товару", callback_data='feedback')
+    ]
+
+    keyboard.add(*buttons)
+
+    return keyboard
+
+
+async def get_shops_inline(shop_list: list):
+    keyboard = InlineKeyboardMarkup(row_width=1)
+    for shop in shop_list:
+        keyboard.add(InlineKeyboardButton(f"📍 {shop['address_name']}", url=shop['google_map_link']))
+    return keyboard
 
 
 async def get_inline_keyboard_category(data):
@@ -103,3 +127,15 @@ class ProductCreator:
     async def get_image_path(self) -> str:
         app_directory = os.getcwd()
         return app_directory + self.product['image']
+
+
+class StockCreator:
+
+    def __init__(self, stock: dict):
+        self.stock = stock
+
+    async def get_image_path(self) -> str:
+        return self.stock['image_path']
+
+    async def get_caption(self) -> str:
+        return self.stock['text']

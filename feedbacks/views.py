@@ -1,3 +1,11 @@
-from django.shortcuts import render
+from rest_framework import  mixins
+from rest_framework.viewsets import GenericViewSet
 
-# Create your views here.
+from feedbacks.models import Feedback
+from feedbacks.serializers import FeedbackSerializer
+
+
+class FeedbackViewSet(mixins.CreateModelMixin, GenericViewSet):
+    queryset = Feedback.objects.all()
+    serializer_class = FeedbackSerializer
+

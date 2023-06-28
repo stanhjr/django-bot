@@ -61,3 +61,23 @@ async def get_products(category_id: int, telegram_id, page: int = None) -> dict:
             if resp.status == 200:
                 data = await resp.json()
                 return data
+
+
+@add_telegram_id_header
+async def get_stocks(telegram_id) -> dict:
+    async with aiohttp.ClientSession() as session:
+        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/stocks/"
+        async with session.get(url=url, headers=HEADERS) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                return data
+
+
+@add_telegram_id_header
+async def get_shops(telegram_id) -> dict:
+    async with aiohttp.ClientSession() as session:
+        url = f"{DIGITAL_PROFILE_HOSTNAME}/api/shops/"
+        async with session.get(url=url, headers=HEADERS) as resp:
+            if resp.status == 200:
+                data = await resp.json()
+                return data
