@@ -47,6 +47,10 @@ INSTALLED_APPS = [
     'users',
     'categories',
     'products',
+    'shops',
+    'feedbacks',
+    'stocks',
+    'analytics',
     'django_cleanup.apps.CleanupConfig',
 ]
 
@@ -57,6 +61,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'analytics.middlewares.AnalyticsMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]

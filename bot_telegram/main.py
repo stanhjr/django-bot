@@ -16,6 +16,7 @@ from keyboards import (
     get_main_menu,
     ProductCreator
 )
+from messages import MESSAGES
 
 load_dotenv(find_dotenv())
 
@@ -43,12 +44,12 @@ async def send_product_photo(product, callback_query, data):
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), commands=['start'])
 async def start(message: types.Message):
     main_keyboard = await get_main_menu()
-    await message.answer("Доброго дня, ласкаво просимо до нашого магазину", reply_markup=main_keyboard)
+    await message.answer(MESSAGES['start'], reply_markup=main_keyboard)
 
 
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), text='🏡 Головне меню')
 async def start(message: types.Message):
-    json_data = await get_categories()
+    json_data = await get_categories(telegram_id=message.from_user.id)
 
     inline_keyboard = await get_inline_keyboard_category(json_data)
     await message.answer("🏡 Головне меню", reply_markup=inline_keyboard)
@@ -56,7 +57,7 @@ async def start(message: types.Message):
 
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('categories_list'))
 async def categories_list(callback_query: types.CallbackQuery):
-    json_data = await get_categories()
+    json_data = await get_categories(telegram_id=callback_query.from_user.id)
 
     inline_keyboard = await get_inline_keyboard_category(json_data)
     await bot.send_message(callback_query.from_user.id,
@@ -67,7 +68,7 @@ async def categories_list(callback_query: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('cat'))
 async def sub_categories(callback_query: types.CallbackQuery):
     category_id = callback_query.data[3:]
-    data = await get_sub_categories(category_id)
+    data = await get_sub_categories(category_id, telegram_id=callback_query.from_user.id)
     inline_keyboard = await get_inline_keyboard_category(data)
     category_name = await get_category_name(data)
 
@@ -79,7 +80,7 @@ async def sub_categories(callback_query: types.CallbackQuery):
 @dp.callback_query_handler(lambda c: c.data and c.data.startswith('pro'))
 async def get_products_category(callback_query: types.CallbackQuery):
     category_id = callback_query.data[3:]
-    data = await get_products(category_id)
+    data = await get_products(category_id, telegram_id=callback_query.from_user.id)
 
     for product in data['products']:
         await send_product_photo(product=product, data=data, callback_query=callback_query)
@@ -89,7 +90,7 @@ async def get_products_category(callback_query: types.CallbackQuery):
 async def get_products_pagination(callback_query: types.CallbackQuery):
     callback_data = callback_query.data[3:]
     category_id, page_num = callback_data.split('_')
-    data = await get_products(category_id, page=page_num)
+    data = await get_products(category_id, page=page_num, telegram_id=callback_query.from_user.id)
     for product in data['products']:
         await send_product_photo(product=product, data=data, callback_query=callback_query)
 
