@@ -99,7 +99,16 @@ async def cancel(message: types.Message, state: FSMContext):
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), commands=['start'])
 async def start(message: types.Message):
     main_keyboard = await get_start_menu()
-    await message.answer(MESSAGES['start'], reply_markup=main_keyboard)
+    try:
+        file_path = 'welcome.mp4'
+        with open(file_path, 'rb') as file:
+            await bot.send_video(message.from_user.id,
+                                 caption=MESSAGES['start'],
+                                 video=file,
+                                 reply_markup=main_keyboard,
+                                 parse_mode="Markdown")
+    except Exception as e:
+        print(e)
 
 
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), text='🏡 Головне меню')
