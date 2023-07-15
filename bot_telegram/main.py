@@ -93,7 +93,7 @@ async def cancel(message: types.Message, state: FSMContext):
     inline_keyboard = await get_main_inline_menu()
     main_keyboard = await get_start_menu()
     await message.answer("Дякую", reply_markup=main_keyboard)
-    await message.answer("🏡 Головне меню", reply_markup=inline_keyboard)
+    await message.answer(MESSAGES['primary_menu'], reply_markup=inline_keyboard)
 
 
 @dp.message_handler(ChatTypeFilter(chat_type=ChatType.PRIVATE), commands=['start'])
@@ -115,8 +115,7 @@ async def start(message: types.Message):
 async def start(message: types.Message):
     inline_keyboard = await get_main_inline_menu()
 
-    # inline_keyboard = await get_inline_keyboard_category(json_data)
-    await message.answer("🏡 Головне меню", reply_markup=inline_keyboard)
+    await message.answer(MESSAGES['primary_menu'], reply_markup=inline_keyboard)
 
 
 @dp.callback_query_handler(lambda c: c.data == 'list_categories')
@@ -215,7 +214,9 @@ async def set_feedback_state(message: types.Message, state: FSMContext):
     )
 
     inline_keyboard = await get_main_inline_menu()
-    await message.answer(MESSAGES['feedback_finish'], reply_markup=inline_keyboard)
+    main_keyboard = await get_start_menu()
+    await message.answer(MESSAGES['feedback_finish'], reply_markup=main_keyboard)
+    await message.answer(MESSAGES['primary_menu'], reply_markup=inline_keyboard)
     await state.finish()
 
 

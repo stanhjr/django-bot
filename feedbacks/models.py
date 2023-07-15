@@ -3,6 +3,7 @@ from django.db import models
 
 class Feedback(models.Model):
     text = models.TextField(max_length=1000)
+    telegram_id = models.BigIntegerField(null=True, blank=True)
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 

@@ -120,7 +120,7 @@ async def get_shops(telegram_id) -> dict:
 async def set_feedback(telegram_id: int, text: str) -> bool:
     async with aiohttp.ClientSession() as session:
         url = f"{DIGITAL_PROFILE_HOSTNAME}/api/feedback/"
-        data = {"text": text}
+        data = {"text": text, "telegram_id": telegram_id}
         headers = dict(HEADERS)  # Создаем копию заголовков
         headers["Content-Type"] = "application/json"  # Устанавливаем Content-Type как application/json
 
