@@ -17,7 +17,7 @@ class Product(models.Model):
         on_delete=models.CASCADE
     )
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default='available')
-    code = models.BigIntegerField()
+    code = models.CharField(max_length=500)
     name = models.CharField(max_length=200)
     description = models.TextField(max_length=5000)
     image = models.ImageField(upload_to='product_images')
