@@ -9,10 +9,14 @@ PAGE_SIZE = 5
 
 class CategoryNameSerializer(serializers.ModelSerializer):
     products_count = serializers.SerializerMethodField()
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'products_count', 'count_parents']
+
+    def get_name(self, obj):
+        return obj.name.capitalize()
 
     def get_products_count(self, obj):
         return obj.get_all_products_count()
@@ -24,6 +28,7 @@ class CategorySaleOutCategoryNameSerializer(CategoryNameSerializer):
 
 
 class CategorySerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
     products = serializers.SerializerMethodField()
     sub_categories = serializers.SerializerMethodField()
     products_count = serializers.SerializerMethodField()
@@ -38,6 +43,9 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'products', 'sub_categories',
                   'products_count', 'count_parents', 'parent_category_for_bot',
                   'parent', 'total_pages', 'next_page', 'previous_page', 'current_page', 'parent_name']
+
+    def get_name(self, obj):
+        return obj.name.capitalize()
 
     def get_parent_name(self, obj):
         if hasattr(obj, 'parent'):
@@ -87,12 +95,16 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class CategorySaleOutSerializer(CategorySerializer):
+    name = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'products', 'sub_categories',
                   'products_count', 'count_parents', 'parent_category_for_bot',
                   'parent', 'total_pages', 'next_page', 'previous_page', 'current_page', 'parent_name']
+
+    def get_name(self, obj):
+        return obj.name.capitalize()
 
     def get_products(self, obj):
         paginator = Paginator(obj.products.filter(sale_out=True).all(), PAGE_SIZE)
